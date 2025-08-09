@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { MdDelete } from "react-icons/md";
 import { DndContext}from "@dnd-kit/core";
 import { closestCenter,KeyboardSensor,PointerSensor,useSensor,useSensors} from "@dnd-kit/core";
@@ -11,15 +11,22 @@ import { v4 } from "uuid";
 
 
 function Cloze({ onChange, onDelete }) {
-  const [text, setText] = useState(
-    "JavaScript is a [blank] and React is a [blank]"
-  );
+  
 
-  const [options, setOptions] = useState([
-    { id: v4(), text: "programming language" },
-    { id: v4(), text: "framework" },
-  ]);
+
   const [newOption, setNewOption] = useState("");
+
+  const [question, setQuestion] = useState(
+    {
+      id: v4(),
+      text: "JavaScript is a [blank] and React is a [blank]",
+      options: [
+        { id: v4(), text: "programming language" },
+        { id: v4(), text: "framework" },
+      ],
+      correctOptionIds: [],
+    }
+  )
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -28,51 +35,90 @@ function Cloze({ onChange, onDelete }) {
     })
   );
 
+  console.log(question);
+
+  useEffect(()=>{
+    if(onChange){
+      onChange(question);
+    }
+  }, [question, onChange]);
+
+  const handleTextChange=(e)=>{
+    const newText=e.target.value;
+    const blankCount=newText.split(/\[blank\]/i).length - 1;
+    setQuestion((prev)=>({
+      ...prev,
+      text: newText,
+      correctOptionIds:Array.from({length:blankCount},(_,i)=>prev.correctOptionIds[i] || null)
+    }))
+  }
+
   const handleAddOption=()=>{
     if(newOption.trim()==""){
       return;
     }
-    setOptions((prev)=>[...prev, { id: v4(), text: newOption }]);
+    setQuestion((prev)=>({
+      ...prev,
+      options:[...prev.options,{id:v4(),text:newOption}],
+      
+    }))
     setNewOption("");
   }
 
   const handleDeleteOption=(id)=>{
-    setOptions((prev)=>prev.filter((option)=>option.id!==id));
+    setQuestion((prev)=>({
+      ...prev,
+      options:prev.options.filter((option)=>option.id!==id),
+      correctOptionIds:prev.correctOptionIds.map((correct)=>(correct===id ? null : correct))
+    }));
   }
   const handleDragEnd=(event)=>{
     const {active,over}=event;
     if(active.id!==over.id){
-      
-        const oldIndex=options.findIndex((option)=>option.id===active.id);
-        const newIndex=options.findIndex((option)=>option.id===over.id);
-        setOptions(arrayMove(options, oldIndex, newIndex));
-      
+
+        const oldIndex=question.options.findIndex((option)=>option.id===active.id);
+        const newIndex=question.options.findIndex((option)=>option.id===over.id);
+        setQuestion((prev)=>({
+          ...prev,
+          options:arrayMove(prev.options, oldIndex, newIndex),
+          correctOptionIds:arrayMove(prev.correctOptionIds, oldIndex, newIndex)
+        }));
     }
   }
 
-
-
-  const handleTextChange = (e) => {
-    setText(e.target.value);
-    if (onChange) {
-      onChange(e.target.value);
-    }
+  const handleCorrectAnswerChange = (blankIdx, optionId) => {
+    setQuestion((prev) => {
+      const updated = [...prev.correctOptionIds];
+      updated[blankIdx] = optionId || null;
+      return { ...prev, correctOptionIds: updated };
+    });
   };
 
+  // const handleTextChange = (e) => {
+  //   setText(e.target.value);
+  //   if (onChange) {
+  //     onChange(e.target.value);
+  //   }
+  // };
+
   const renderPreview = () => {
-    const parts = text.split(/\[blank\]/i);
+    const parts = question.text.split(/\[blank\]/i);
     return (
       <div className="flex flex-wrap gap-2 mt-4 text-lg items-center">
         {parts.map((part, i) => (
           <span key={i} className="flex items-center whitespace-pre-wrap">
             <span>{part}</span>
             {i < parts.length - 1 && (
-              <input
-                type="text"
-                editable="false"
-                className="border border-gray-300 rounded-md px-3 py-1 w-28 mx-1 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-500 transition"
-                placeholder={`Blank ${i + 1}`}
-              />
+              <select
+                value={question.correctOptionIds[i] || ""}
+                onChange={(e) => handleCorrectAnswerChange(i, e.target.value)}
+                className="border border-gray-300 rounded-md px-2 py-1 mx-1 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-500 transition"
+              >
+                <option value="">Select answer</option>
+                {question.options.map((opt) => (
+                  <option key={opt.id} value={opt.id}>{opt.text}</option>
+                ))}
+              </select>
             )}
           </span>
         ))}
@@ -94,10 +140,11 @@ function Cloze({ onChange, onDelete }) {
           <MdDelete className="w-6 h-6" />
         </button>
       </div>
+
       <textarea
         id="cloze-textarea"
-        className="w-full border border-gray-300 rounded-md p-1.5  resize-y focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-500 shadow-sm transition"
-        value={text}
+        className="w-full border border-gray-300 rounded-md p-1.5 resize-y focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-500 shadow-sm transition"
+        value={question.text}
         onChange={handleTextChange}
         placeholder="Type your paragraph with [blank] where you want the user to fill."
       />
@@ -125,12 +172,19 @@ function Cloze({ onChange, onDelete }) {
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={options.map((o) => o.id)} strategy={verticalListSortingStrategy}>
+        <SortableContext items={question.options.map((o) => o.id)} strategy={verticalListSortingStrategy}>
           <ul className="mt-4 space-y-2 flex flex-col">
-            {options.map((option,i) => (
+            {question.options.map((option) => (
               <li key={option.id} className="flex items-center gap-2 min-w-full">
-                <SortableItem id={option.id} text={option.text} className={"bg-white border w-full px-4 py-2 rounded shadow cursor-move"} />
-                <MdDelete className="w-6 h-6 cursor-pointer text-red-500 hover:text-red-700" onClick={() => handleDeleteOption(option.id)} />
+                <SortableItem
+                  id={option.id}
+                  text={option.text}
+                  className="bg-white border w-full px-4 py-2 rounded shadow cursor-move"
+                />
+                <MdDelete
+                  className="w-6 h-6 cursor-pointer text-red-500 hover:text-red-700"
+                  onClick={() => handleDeleteOption(option.id)}
+                />
               </li>
             ))}
           </ul>

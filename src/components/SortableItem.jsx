@@ -18,7 +18,7 @@ export default function SortableItem({ id, text,className }) {
   };
 
   return (
-    <li
+    <div
       ref={setNodeRef}
       style={style}
       {...attributes}
@@ -26,6 +26,6 @@ export default function SortableItem({ id, text,className }) {
       className={className}
     >
       {text}
-    </li>
+    </div>
   );
 }
