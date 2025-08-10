@@ -21,7 +21,7 @@ function TextCloze() {
     correctOptionIds: ["1", "3"], 
   };
 
-//   console.log(answers);
+  // console.log(answers);
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen flex flex-col items-center">

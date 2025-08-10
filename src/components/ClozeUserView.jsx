@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from "react";
 
 function ClozeUserView({ question, onAnswerChange }) {
+    
   const [answers, setAnswers] = useState(
     Array.from({ length: question.correctOptionIds.length }, () => "")
   );
 
   useEffect(() => {
     if (onAnswerChange) {
-      onAnswerChange(question.id, answers);
+      onAnswerChange(answers);
     }
-  }, [answers, question.id, onAnswerChange]);
+  }, [answers, question.id]);
+
+//   console.log(answers);
 
   const handleSelectChange = (blankIdx, value) => {
     setAnswers((prev) => {

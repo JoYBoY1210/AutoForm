@@ -14,10 +14,9 @@ import {
   SortableContext,
   arrayMove,
   verticalListSortingStrategy,
+  sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
-import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import SortableItem from "./SortableItem";
-
 
 function Container({ id, title, color, itemIds, allItems, itemStyle }) {
   const { setNodeRef, isOver } = useDroppable({ id });
@@ -54,7 +53,6 @@ function Container({ id, title, color, itemIds, allItems, itemStyle }) {
   );
 }
 
-
 function DragPreview({ item, itemStyle }) {
   return (
     <div
@@ -64,14 +62,16 @@ function DragPreview({ item, itemStyle }) {
         transform: "scale(1.05)",
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center' }}>
+      <div style={{ display: "flex", alignItems: "center" }}>
         {item.text}
       </div>
     </div>
   );
 }
 
-function CategorizeUserView({ categories, items }) {
+function CategorizeUserView({ data, onChange }) {
+  const { categories, items } = data;
+
   const [categoryItems, setCategoryItems] = useState(() => {
     const initial = { unassigned: items.map((i) => i.id) };
     categories.forEach((cat) => {
@@ -79,37 +79,39 @@ function CategorizeUserView({ categories, items }) {
     });
     return initial;
   });
-  
- 
+
   const [activeId, setActiveId] = useState(null);
-  const activeItem = activeId ? items.find(item => item.id === activeId) : null;
+  const activeItem = activeId ? items.find((item) => item.id === activeId) : null;
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
-    }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
   const findContainer = (id) => {
     if (id in categoryItems) return id;
-    
     return Object.keys(categoryItems).find((key) =>
       categoryItems[key].includes(id)
     );
   };
 
-  const handleDragStart = (event) => {
-    const { active } = event;
-    setActiveId(active.id);
+  const updateState = (newState) => {
+    setCategoryItems(newState);
+    if (onChange) {
+      const result = {};
+      categories.forEach((cat) => {
+        result[cat.id] = newState[cat.id].map((id) =>
+          items.find((i) => i.id === id)
+        );
+      });
+      onChange(result);
+    }
   };
 
-  const handleDragEnd = (event) => {
-    const { active, over } = event;
+  const handleDragStart = ({ active }) => setActiveId(active.id);
+
+  const handleDragEnd = ({ active, over }) => {
     setActiveId(null);
-    
     if (!over) return;
 
     const activeContainer = findContainer(active.id);
@@ -119,36 +121,32 @@ function CategorizeUserView({ categories, items }) {
     if (activeContainer === overContainer) {
       const activeIndex = categoryItems[activeContainer].indexOf(active.id);
       const overIndex = categoryItems[overContainer].indexOf(over.id);
-      setCategoryItems((prev) => ({
-        ...prev,
+      updateState({
+        ...categoryItems,
         [activeContainer]: arrayMove(
-          prev[activeContainer],
+          categoryItems[activeContainer],
           activeIndex,
           overIndex
         ),
-      }));
+      });
     } else {
-      setCategoryItems((prev) => {
-        const activeItems = [...prev[activeContainer]];
-        activeItems.splice(activeItems.indexOf(active.id), 1);
+      const activeItems = [...categoryItems[activeContainer]];
+      activeItems.splice(activeItems.indexOf(active.id), 1);
 
-        const overItems = [...prev[overContainer]];
-        const overIndex = overItems.indexOf(over.id);
-        const insertIndex = overIndex >= 0 ? overIndex : overItems.length;
-        overItems.splice(insertIndex, 0, active.id);
+      const overItems = [...categoryItems[overContainer]];
+      const overIndex = overItems.indexOf(over.id);
+      const insertIndex = overIndex >= 0 ? overIndex : overItems.length;
+      overItems.splice(insertIndex, 0, active.id);
 
-        return {
-          ...prev,
-          [activeContainer]: activeItems,
-          [overContainer]: overItems,
-        };
+      updateState({
+        ...categoryItems,
+        [activeContainer]: activeItems,
+        [overContainer]: overItems,
       });
     }
   };
 
-  const handleDragCancel = () => {
-    setActiveId(null);
-  };
+  const handleDragCancel = () => setActiveId(null);
 
   const colors = ["#ffe5e5", "#e5f1ff", "#e8ffe5", "#fff9e5"];
 
@@ -198,7 +196,7 @@ function CategorizeUserView({ categories, items }) {
             />
           ))}
         </div>
-        
+
         <DragOverlay
           dropAnimation={{
             ...defaultDropAnimation,
