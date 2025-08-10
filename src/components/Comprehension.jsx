@@ -76,23 +76,13 @@ function SortableOption({
   );
 }
 
-export default function Comprehension() {
+export default function Comprehension({question:initialQuestion, onChange, onDelete}) {
   const [passage, setPassage] = useState('');
-  const [questions, setQuestions] = useState([
-    {
-      id: uuidv4(),
-      text: '',
-      options: [
-        { id: uuidv4(), text: '' },
-        { id: uuidv4(), text: '' }
-      ],
-      correctOptionId: null
-    }
-  ]);
+  const [questions, setQuestions] = useState(initialQuestion.questions);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
-    useSensor(KeyboardSensor, { coordinateGetter: null }) // default keyboard support
+    useSensor(KeyboardSensor, { coordinateGetter: null }) 
   );
 
   

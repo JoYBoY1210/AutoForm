@@ -10,22 +10,14 @@ import { v4 } from "uuid";
 
 
 
-function Cloze({ onChange, onDelete }) {
+function Cloze({question:initialQuestion, onChange, onDelete }) {
   
 
 
   const [newOption, setNewOption] = useState("");
 
   const [question, setQuestion] = useState(
-    {
-      id: v4(),
-      text: "JavaScript is a [blank] and React is a [blank]",
-      options: [
-        { id: v4(), text: "programming language" },
-        { id: v4(), text: "framework" },
-      ],
-      correctOptionIds: [],
-    }
+    initialQuestion
   )
 
   const sensors = useSensors(
@@ -35,13 +27,13 @@ function Cloze({ onChange, onDelete }) {
     })
   );
 
-  console.log(question);
+  // console.log(question);
 
   useEffect(()=>{
     if(onChange){
       onChange(question);
     }
-  }, [question, onChange]);
+  }, [question]);
 
   const handleTextChange=(e)=>{
     const newText=e.target.value;
