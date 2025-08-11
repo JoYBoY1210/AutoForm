@@ -78,7 +78,7 @@ function Formbuilder() {
     console.log(formTitle,formDescription,questions)
 
     try {
-      const res = await fetch("http://localhost:5000/api/tests/create", {
+      const res = await fetch("/api/tests/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

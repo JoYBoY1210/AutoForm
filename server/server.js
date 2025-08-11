@@ -21,6 +21,8 @@ mongoose.connect(MONGO_URI)
     console.error("MongoDB connection error:", err);
   });
 
+  app.use(express.static('./dist'))
+
 app.use("/api/tests", testRoutes);
 
 const PORT = process.env.PORT || 5000;

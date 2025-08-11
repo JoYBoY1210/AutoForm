@@ -17,7 +17,7 @@ function TestGivePage() {
     }
 
     setLoading(true);
-    fetch(`http://localhost:5000/api/tests/${testId}`)
+    fetch(`/api/tests/${testId}`)
       .then((res) => res.json())
       .then((data) => {
         setTestData(data?.questions || []);
