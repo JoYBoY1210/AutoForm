@@ -66,8 +66,8 @@ function Categories({ question: initialQuestion, onChange, onDelete }) {
         { id: uuidv4(), name: "Category 2" }
       ],
       items: [
-        { id: uuidv4(), text: "item 1", category: null },
-        { id: uuidv4(), text: "item 2", category: null }
+        { id: uuidv4(), text: "item 1", correctCategoryId: null },
+        { id: uuidv4(), text: "item 2", correctCategoryId: null }
       ]
     }
   );
@@ -115,7 +115,7 @@ function Categories({ question: initialQuestion, onChange, onDelete }) {
       ...prev,
       items: [
         ...prev.items,
-        { id: uuidv4(), text: newItemText, category: newItemCategory || null }
+        { id: uuidv4(), text: newItemText, correctCategoryId: newItemCategory || null }
       ]
     }));
     setNewItemText('');
@@ -126,7 +126,7 @@ function Categories({ question: initialQuestion, onChange, onDelete }) {
     setLocalQuestion(prev => ({
       ...prev,
       items: prev.items.map(item =>
-        item.id === itemId ? { ...item, category: categoryId } : item
+        item.id === itemId ? { ...item, correctCategoryId: categoryId } : item
       ),
     }));
   };
@@ -336,7 +336,7 @@ function Categories({ question: initialQuestion, onChange, onDelete }) {
           }}>
             <span style={{ flex: 1, fontSize: 16 }}>{item.text}</span>
             <select
-              value={item.category || ''}
+              value={item.correctCategoryId || ''}
               onChange={e => handleItemCategoryChange(item.id, e.target.value)}
               className="border p-1 rounded"
               style={{

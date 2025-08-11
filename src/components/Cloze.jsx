@@ -20,6 +20,9 @@ function Cloze({question:initialQuestion, onChange, onDelete }) {
     initialQuestion
   )
 
+
+
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {

@@ -5,41 +5,28 @@ import TestComprehension from './components/TestComprehension'
 import UserTestView from './components/UserTestView'
 import './App.css'
 import { useState,useEffect } from 'react'
+import HomePage from './components/HomePage'
+import TestGivePage from './pages/TestGivePage'
+import FormBuilderPage from './pages/FormBuilderPage'
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+
 
 function App() {
-  const[testData, setTestData] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("http://localhost:5000/api/tests/6898ebb45547bdba49c18d17")
-      .then((res) => res.json())
-      .then((data) => {
-        console.log(data.questions);
-        setTestData(data?.questions || []);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Error fetching test data:", err);
-        alert("Failed to load test data.");
-        setLoading(true);
-      });
-  }, []);
+  
 
 
-  // console.log(testData);
-  // if(loading){
-  //   return <div>Loading...</div>;
-  // }
+
+  
 
   return (
-    <div className=''>
-      <UserTestView testData={testData} />
-      {/* <TestComprehension /> */}
-      {/* <Formbuilder /> */}
-      {/* <TestCategorise /> */}
-      {/* <TextCloze /> */}
-
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/create" element={<FormBuilderPage />} />
+        <Route path="/test" element={<TestGivePage />} />
+        
+      </Routes>
+    </Router>
   )
 }
 

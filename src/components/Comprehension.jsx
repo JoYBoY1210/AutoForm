@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { RxCross2 } from 'react-icons/rx';
 import { IoIosMenu } from "react-icons/io";
@@ -21,7 +21,6 @@ import {
 
 import { CSS } from '@dnd-kit/utilities';
 
-
 function SortableOption({
   id,
   option,
@@ -38,7 +37,6 @@ function SortableOption({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    
   };
 
   return (
@@ -76,42 +74,61 @@ function SortableOption({
   );
 }
 
-export default function Comprehension({question:initialQuestion, onChange, onDelete}) {
-  const [passage, setPassage] = useState('');
-  const [questions, setQuestions] = useState(initialQuestion.questions);
+export default function Comprehension({ question: initialQuestion, onChange, onDelete }) {
+  const [localQuestion, setLocalQuestion] = useState(
+    initialQuestion || {
+      id: uuidv4(),
+      type: "comprehension",
+      passage: "",
+      questions: [
+        {
+          id: uuidv4(),
+          text: '',
+          options: [
+            { id: uuidv4(), text: '' },
+            { id: uuidv4(), text: '' }
+          ],
+          correctOptionId: ''
+        }
+      ]
+    }
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: null }) 
   );
 
-  
-  const handlePassageChange = (e) => setPassage(e.target.value);
+  useEffect(() => {
+    if (onChange) onChange(localQuestion);
+  }, [localQuestion]);
 
-  
+  const handlePassageChange = (e) => setLocalQuestion(prev => ({ ...prev, passage: e.target.value }));
+
   const handleQuestionChange = (questionId, value) => {
-    setQuestions((qs) =>
-      qs.map((q) => (q.id === questionId ? { ...q, text: value } : q))
-    );
+    setLocalQuestion(prev => ({
+      ...prev,
+      questions: prev.questions.map((q) => (q.id === questionId ? { ...q, text: value } : q))
+    }));
   };
 
-  
   const handleOptionChange = (questionId, optionId, value) => {
-    setQuestions((qs) =>
-      qs.map((q) => {
+    setLocalQuestion(prev => ({
+      ...prev,
+      questions: prev.questions.map((q) => {
         if (q.id !== questionId) return q;
         const newOpts = q.options.map((opt) =>
           opt.id === optionId ? { ...opt, text: value } : opt
         );
         return { ...q, options: newOpts };
       })
-    );
+    }));
   };
 
-  
   const handleAddOption = (questionId) => {
-    setQuestions((qs) =>
-      qs.map((q) =>
+    setLocalQuestion(prev => ({
+      ...prev,
+      questions: prev.questions.map((q) =>
         q.id === questionId
           ? {
               ...q,
@@ -119,72 +136,75 @@ export default function Comprehension({question:initialQuestion, onChange, onDel
             }
           : q
       )
-    );
+    }));
   };
 
-  
   const handleRemoveOption = (questionId, optionId) => {
-    const question = questions.find(q => q.id === questionId);
+    const question = localQuestion.questions.find(q => q.id === questionId);
     if (!question) return;
-    if(question.id === questionId && question.options.length <= 2) {
+    if (question.id === questionId && question.options.length <= 2) {
       alert("At least two options are required.");
       return;
     }
-    setQuestions((qs) =>
-      qs.map((q) => {
+    setLocalQuestion(prev => ({
+      ...prev,
+      questions: prev.questions.map((q) => {
         if (q.id !== questionId) return q;
         let newOpts = q.options.filter((opt) => opt.id !== optionId);
         let newCorrectId = q.correctOptionId === optionId ? null : q.correctOptionId;
         return { ...q, options: newOpts, correctOptionId: newCorrectId };
       })
-    );
+    }));
   };
 
-  
   const handleMarkCorrect = (questionId, optionId) => {
-    setQuestions((qs) =>
-      qs.map((q) =>
+    setLocalQuestion(prev => ({
+      ...prev,
+      questions: prev.questions.map((q) =>
         q.id === questionId ? { ...q, correctOptionId: optionId } : q
       )
-    );
+    }));
   };
 
-  
   const handleAddQuestion = () => {
-    setQuestions((qs) => [
-      ...qs,
-      {
-        id: uuidv4(),
-        text: '',
-        options: [
-          { id: uuidv4(), text: '' },
-          { id: uuidv4(), text: '' }
-        ],
-        correctOptionId: null
-      }
-    ]);
+    setLocalQuestion(prev => ({
+      ...prev,
+      questions: [
+        ...prev.questions,
+        {
+          id: uuidv4(),
+          text: '',
+          options: [
+            { id: uuidv4(), text: '' },
+            { id: uuidv4(), text: '' }
+          ],
+          correctOptionId: null
+        }
+      ]
+    }));
   };
 
-  
   const handleRemoveQuestion = (questionId) => {
-    
-    setQuestions((qs) => qs.filter((q) => q.id !== questionId));
+    setLocalQuestion(prev => ({
+      ...prev,
+      questions: prev.questions.filter((q) => q.id !== questionId)
+    }));
   };
 
-  
   const handleDragEnd = (questionId, event) => {
     const { active, over } = event;
     if (!over) return;
     if (active.id !== over.id) {
-      setQuestions((qs) =>
-        qs.map((q) => {
+      setLocalQuestion(prev => ({
+        ...prev,
+        questions: prev.questions.map((q) => {
           if (q.id !== questionId) return q;
           const oldIndex = q.options.findIndex((o) => o.id === active.id);
           const newIndex = q.options.findIndex((o) => o.id === over.id);
           const newOpts = arrayMove(q.options, oldIndex, newIndex);
           return { ...q, options: newOpts };
         })
-      );
+      }));
     }
   };
 
@@ -192,7 +212,6 @@ export default function Comprehension({question:initialQuestion, onChange, onDel
     <div className="max-w-5xl mx-auto bg-white p-8 rounded-xl shadow space-y-10">
       <h2 className="text-3xl font-bold mb-6">Comprehension Editor</h2>
 
-      
       <div>
         <label htmlFor="passage" className="block font-semibold mb-2 text-lg">
           Passage:
@@ -200,20 +219,18 @@ export default function Comprehension({question:initialQuestion, onChange, onDel
         <textarea
           id="passage"
           className="w-full border border-gray-300 rounded p-3 min-h-[120px] focus:outline-none focus:ring-2 focus:ring-indigo-400 shadow-sm"
-          value={passage}
+          value={localQuestion.passage}
           onChange={handlePassageChange}
           placeholder="Type the comprehension passage here..."
         />
       </div>
 
-      
-      {questions.map((q, qIndex) => (
+      {localQuestion.questions.map((q, qIndex) => (
         <div
           key={q.id}
           className="bg-gray-50 rounded-lg p-6 shadow border border-gray-200 relative"
         >
-          
-          {questions.length > 1 && (
+          {localQuestion.questions.length > 1 && (
             <button
               onClick={() => handleRemoveQuestion(q.id)}
               className="absolute top-4 right-4 text-red-500 hover:text-red-700"
@@ -222,9 +239,10 @@ export default function Comprehension({question:initialQuestion, onChange, onDel
             >
               <RxCross2 className="text-2xl" />
             </button>
-          )}
+          )
 
-          
+          }
+
           <label
             htmlFor={`question-${q.id}`}
             className="block font-semibold mb-2 text-lg"
@@ -240,7 +258,6 @@ export default function Comprehension({question:initialQuestion, onChange, onDel
             placeholder="Enter question text"
           />
 
-          
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -272,12 +289,11 @@ export default function Comprehension({question:initialQuestion, onChange, onDel
             className="mt-4 bg-indigo-100 text-indigo-700 px-4 py-2 rounded hover:bg-indigo-200 transition font-medium"
             type="button"
           >
-           Add Option
+            Add Option
           </button>
         </div>
       ))}
 
-      
       <button
         onClick={handleAddQuestion}
         className="bg-orange-100 text-orange-700 px-6 py-3 rounded-lg hover:bg-orange-200 transition font-semibold"

@@ -2,10 +2,11 @@ import React, { useCallback, useState } from "react";
 import CategorizeUserView from "./CategorizeUserView";
 import ClozeUserView from "./ClozeUserView";
 import ComprehensionUserView from "./ComprehensionUserView";
+import { useNavigate } from "react-router-dom";
 
 export default function UserTestView({ testData }) {
   const [answers, setAnswers] = useState({});
-  const [score, setScore] = useState(null);
+  const navigate = useNavigate();
   const [totalQuestions, setTotalQuestions] = useState(0);
 
   const handleAnswerChange = useCallback((questionId, answerData) => {
@@ -15,56 +16,13 @@ export default function UserTestView({ testData }) {
     }));
   }, []);
 
-  const calculateScore = () => {
-    let correctCount = 0;
-    let total = 0;
-
-    testData.forEach((q) => {
-      if (q.type === "categorize") {
-        total++;
-        const userCats = answers[q.id] || {};
-        let allCorrect = true;
-        for (let catId in userCats) {
-          userCats[catId].forEach((item) => {
-            if (item.correctCategoryId !== catId) {
-              allCorrect = false;
-            }
-          });
-        }
-        if (allCorrect) correctCount++;
-      }
-
-      if (q.type === "cloze") {
-        total++;
-        const userAns = answers[q.id] || [];
-        if (
-          userAns.length === q.correctOptionIds.length &&
-          userAns.every((val, idx) => val === q.correctOptionIds[idx])
-        ) {
-          correctCount++;
-        }
-      }
-
-      if (q.type === "comprehension") {
-        q.questions.forEach((mcq) => {
-          total++;
-          const userAns = answers[q.id]?.[mcq.id];
-          if (userAns === mcq.correctOptionId) {
-            correctCount++;
-          }
-        });
-      }
-    });
-
-    setScore(correctCount);
-    setTotalQuestions(total);
-  };
+  
 
 //   console.log(totalQuestions, score, answers);
 
   const handleSubmit = () => {
-    calculateScore();
-    // window.scrollTo({ top: 0, behavior: "smooth" });
+    alert("Test submitted successfully");
+    navigate("/");
   };
 
   return (
@@ -127,26 +85,6 @@ export default function UserTestView({ testData }) {
             Submit Test
           </button>
         </div>
-
-        {score !== null && (
-          <div className="mt-10 text-center bg-gray-50 border border-gray-200 rounded-lg p-6">
-            <h2 className="text-2xl font-semibold text-gray-800">
-              Test Results
-            </h2>
-            <p className="mt-3 text-lg text-gray-700">
-              You scored{" "}
-              <span
-                className={`font-bold ${
-                  score / totalQuestions >= 0.5 ? "text-green-600" : "text-red-600"
-                }`}
-              >
-                {score}
-              </span>{" "}
-              out of{" "}
-              <span className="font-bold text-gray-800">{totalQuestions}</span>
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -2,11 +2,14 @@ import React, { useState } from "react";
 import QuestionCard from "./QuestionCard";
 import { LuFileQuestion } from "react-icons/lu";
 import { v4 as uuidv4 } from "uuid";
+import { useNavigate } from "react-router-dom";
 
 function Formbuilder() {
   const [questions, setQuestions] = useState([]);
   const [formTitle, setFormTitle] = useState("");
   const [formDescription, setFormDescription] = useState("");
+  const [id, setId] = useState("");
+  const navigate = useNavigate();
 
   const addQuestion = (type) => {
     let newQuestion;
@@ -41,8 +44,7 @@ function Formbuilder() {
       newQuestion = {
         id: uuidv4(),
         type: "comprehension",
-        passageTitle: "",
-        passageText: "",
+        passage: "",
         questions: [
           {
             id: uuidv4(),
@@ -51,7 +53,7 @@ function Formbuilder() {
               { id: uuidv4(), text: "" },
               { id: uuidv4(), text: "" }
             ],
-            correctOptionId: null
+            correctOptionId: ""
           }
         ]
       };
@@ -73,7 +75,6 @@ function Formbuilder() {
       return;
     }
 
-
     console.log(formTitle,formDescription,questions)
 
     try {
@@ -87,15 +88,13 @@ function Formbuilder() {
         })
       });
 
-      
       if (res.ok) {
         const savedTest = await res.json();
-        console.log("Test saved:", savedTest);
         alert("Test saved successfully!");
         setFormTitle("");
         setFormDescription("");
         setQuestions([]);
-        
+        setId(savedTest.id);
       } else {
         console.error("Failed to save test");
         alert("Error saving test.");
@@ -105,6 +104,16 @@ function Formbuilder() {
       alert("Error saving test.");
     }
   };
+
+  if (id) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-zinc-800 to-slate-800 flex flex-col items-center justify-center text-white px-4">
+        <h1 className="text-3xl font-bold mb-4">Test Created Successfully!</h1>
+        <p className="text-lg mb-2">Share this ID with participants to give the test:</p>
+        <div className="bg-zinc-900 px-6 py-3 rounded-lg text-2xl font-mono">{id}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-800 to-slate-800 flex flex-col items-center py-8 px-2">

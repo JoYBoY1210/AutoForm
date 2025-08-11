@@ -21,7 +21,7 @@ function ComprehensionUserView({ data, onChange }) {
       
       <div className="mb-6 p-4 border rounded-lg bg-gray-50 max-h-60 overflow-y-auto">
         {/* <h2 className="text-lg font-semibold mb-2">{data.passageTitle}</h2> */}
-        <p className="text-gray-900 text-lg whitespace-pre-line">{data.passageText}</p>
+        <p className="text-gray-900 text-lg whitespace-pre-line">{data.passage}</p>
       </div>
 
       

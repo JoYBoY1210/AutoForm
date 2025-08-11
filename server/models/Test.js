@@ -7,7 +7,7 @@ const optionSchema = new mongoose.Schema({
 
 const categorySchema = new mongoose.Schema({
     id: { type: String, required: true },
-    text: { type: String, required: true }
+    name: { type: String, required: true }
 });
 
 const itemSchema = new mongoose.Schema({
@@ -18,7 +18,7 @@ const itemSchema = new mongoose.Schema({
 
 const mcqSchema = new mongoose.Schema({
     id: { type: String, required: true },
-    question: { type: String, required: true },
+    text: { type: String, required: true },
     options: [optionSchema],
     correctOptionId: { type: String, required: true }
 });
@@ -30,8 +30,7 @@ const questionSchema = new mongoose.Schema({
     items: [itemSchema],
     options: [optionSchema],
     correctOptionIds: [String],
-    passageTitle: String,
-    passageText: String,
+    passage: String,
     questions: [mcqSchema]
 });
 
